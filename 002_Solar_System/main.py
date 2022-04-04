@@ -1,90 +1,78 @@
-import pygame
-import sys
+import math
+from matplotlib.pyplot import draw
+import pygame, sys
+from pygame.locals import *
+from solar_system import Sun, Planet, WIDTH, HEIGHT, PLANETS, FPS
 
-WIDTH = 800
-HEIGHT = 800
-CENTER_X = WIDTH/2
-CENTER_Y = HEIGHT/2
+# Colors
+BLACK = pygame.Color(0,0,0)
 
-WHITE = (255,255, 255)
-BLACK = (0,0,0)
+# Pygame Initiation
+def init():
+    global screen
+    global clock
+    screen = pygame.display.set_mode((WIDTH, HEIGHT))
+    clock = pygame.time.Clock()
+    pygame.display.set_caption("Solar System")
+    pygame.init()
 
-SUN = pygame.color.Color('orange')
-MERCURY =  pygame.color.Color('grey')
-VENUS =  pygame.color.Color('brown')
-EARTH =  pygame.color.Color('blue')
-MARS =  pygame.color.Color('red')
-JUPITER =  pygame.color.Color('orange')
-SATURN =  pygame.color.Color('beige')
-URANUS =  pygame.color.Color('beige')
-NEPTUNE =  pygame.color.Color('darkblue')
-PLUTO =  pygame.color.Color('darkred')
+init()
 
-FPS = 50
-TITLE = "Solar System"
-
-pygame.init()
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption(TITLE)
-clock = pygame.time.Clock()
+# Initiate classes
 
 
-class Planet:
-    def __init__(self, distance, radius, speed, name, color):
-        self.x = CENTER_X + distance
-        self.y = CENTER_Y + distance
-        self.distance = distance
-        self.radius = radius
-        self.speed = speed
-        self.name = name
-        self.color = color
+speed = 10
+sun = Sun(screen)
+p_list = [Planet(screen, data["daysPerYear"], data["radius"],  data["color"], data["distance"], name, speed, data["direction"]) for name, data in PLANETS.items()]
     
-    def draw(self):
-        pygame.draw.circle(screen, self.color, (self.x, self.y), self.radius)
-        self.move()
+# Font
+font = pygame.font.SysFont('Arial', 15)
+font2 = pygame.font.SysFont(None, 30)
 
-    def move(self):
-        self.x += self.speed
+def maps(num, min1, max1, min2, max2):
+    return(((num - min1) / (max1 - min1)) * (max2 - min2)) + min2
 
-
-
-def update():
-    pass
-
-sun = Planet(0, 50, 0, "Sun", SUN)
-mercury = Planet(100, 10, 10, "Mercury", MERCURY)
+# Draw
 def draw():
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+    
+    # Background
     screen.fill(BLACK)
+
+    # Draw sun
     sun.draw()
-    mercury.draw()
+    # Draw planets
+    for p in p_list:
+        p.draw()
+        p.speed = maps(mouse_x, 0, WIDTH, 1, 100)
+    
+    # Number of earth days
+    number_of_days = int(p_list[2].current_day)
+    # Earth days to year
+    years = abs(round(number_of_days/365, 2))
+    
+    # Show time text
+    text =  font.render(f"Time = {years} Earth Years", False, (255,255,255))
+    screen.blit(text,(10,10))
 
+    text =  font.render(f"Speed = {int(p.speed)} X", False, (255,255,255))
+    screen.blit(text,(10,30))
 
+    text =  font2.render(f"Solar System", False, (255,255,255))
+    text_x = text.get_width()/2
+    screen.blit(text,(WIDTH/2-text_x,10))
 
+    
 
-app_running = True
-while app_running:
-    mouse_position = pygame.mouse.get_pos()
-
-    # Loop over events
+# Loop
+running = True
+while running:
     for event in pygame.event.get():
-        # Quit event
-        if event.type == pygame.QUIT:
-            app_running == False
+        if event.type == QUIT:
+            pygame.quit()
             sys.exit()
-
-        # Keydown events
-        elif event.type == pygame.KEYDOWN:
-            # Escape
-            if event.key == pygame.K_ESCAPE:
-                app_running == False
-                sys.exit()
         
-
-    update()
     draw()
 
-    pygame.display.flip()
-
+    pygame.display.update()
     clock.tick(FPS)
-
-pygame.quit()
